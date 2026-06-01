@@ -17,12 +17,16 @@
 
 from __future__ import annotations
 
+import logging
+import uuid
 from typing import Any, TYPE_CHECKING
 
 from sqlalchemy import and_, or_
 
 from superset import db
 from superset.sql.parse import Table
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from superset.models.core import Database
@@ -181,6 +185,9 @@ def collect_rls_predicates_for_sql(
             }
         )
     except Exception:
-        # If we can't parse the SQL, return empty list
-        # This ensures RLS application failure doesn't break caching
-        return []
+        logger.error(
+            "Failed to collect RLS predicates for SQL; "
+            "returning cache-miss sentinel to prevent cross-user data leakage",
+            exc_info=True,
+        )
+        return [f"__rls_parse_error_{uuid.uuid4().hex}"]
