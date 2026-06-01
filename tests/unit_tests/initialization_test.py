@@ -21,6 +21,10 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy.exc import OperationalError
 
 from superset.app import AppRootMiddleware, create_app, SupersetApp
+from superset.constants import (
+    CHANGE_ME_ASYNC_QUERIES_JWT_SECRET,
+    CHANGE_ME_GUEST_TOKEN_JWT_SECRET,
+)
 from superset.initialization import SupersetAppInitializer
 
 
@@ -257,3 +261,119 @@ class TestCreateAppRoot:
 
         assert isinstance(app.wsgi_app, AppRootMiddleware)
         assert app.wsgi_app.app_root == "/from-param"
+
+
+class TestCheckAsyncQueriesJwtSecret:
+    @patch("superset.initialization.feature_flag_manager")
+    def test_skips_when_feature_disabled(self, mock_ff):
+        """No-op when GLOBAL_ASYNC_QUERIES is not enabled."""
+        mock_ff.is_feature_enabled.return_value = False
+        mock_app = MagicMock()
+        mock_app.config = {
+            "GLOBAL_ASYNC_QUERIES_JWT_SECRET": CHANGE_ME_ASYNC_QUERIES_JWT_SECRET,
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_async_queries_jwt_secret()  # should not raise / exit
+
+    @patch("superset.initialization.feature_flag_manager")
+    def test_passes_with_custom_secret(self, mock_ff):
+        """No-op when secret has been changed from the default."""
+        mock_ff.is_feature_enabled.return_value = True
+        mock_app = MagicMock()
+        mock_app.config = {
+            "GLOBAL_ASYNC_QUERIES_JWT_SECRET": "a-very-long-custom-secret-for-prod",
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_async_queries_jwt_secret()  # should not raise / exit
+
+    @patch("superset.initialization.sys")
+    @patch("superset.initialization.logger")
+    @patch("superset.initialization.feature_flag_manager")
+    def test_exits_in_production_with_default_secret(
+        self, mock_ff, mock_logger, mock_sys
+    ):
+        """Refuses to start in production when the default secret is used."""
+        mock_ff.is_feature_enabled.return_value = True
+        mock_app = MagicMock()
+        mock_app.debug = False
+        mock_app.config = {
+            "GLOBAL_ASYNC_QUERIES_JWT_SECRET": CHANGE_ME_ASYNC_QUERIES_JWT_SECRET,
+            "TESTING": False,
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_async_queries_jwt_secret()
+        mock_sys.exit.assert_called_once_with(1)
+
+    @patch("superset.initialization.sys")
+    @patch("superset.initialization.logger")
+    @patch("superset.initialization.feature_flag_manager")
+    def test_warns_but_continues_in_debug_mode(self, mock_ff, mock_logger, mock_sys):
+        """Warns but does not exit in debug mode."""
+        mock_ff.is_feature_enabled.return_value = True
+        mock_app = MagicMock()
+        mock_app.debug = True
+        mock_app.config = {
+            "GLOBAL_ASYNC_QUERIES_JWT_SECRET": CHANGE_ME_ASYNC_QUERIES_JWT_SECRET,
+            "TESTING": False,
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_async_queries_jwt_secret()
+        mock_sys.exit.assert_not_called()
+
+
+class TestCheckGuestTokenSecret:
+    @patch("superset.initialization.feature_flag_manager")
+    def test_skips_when_feature_disabled(self, mock_ff):
+        """No-op when EMBEDDED_SUPERSET is not enabled."""
+        mock_ff.is_feature_enabled.return_value = False
+        mock_app = MagicMock()
+        mock_app.config = {
+            "GUEST_TOKEN_JWT_SECRET": CHANGE_ME_GUEST_TOKEN_JWT_SECRET,
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_guest_token_secret()  # should not raise / exit
+
+    @patch("superset.initialization.feature_flag_manager")
+    def test_passes_with_custom_secret(self, mock_ff):
+        """No-op when secret has been changed from the default."""
+        mock_ff.is_feature_enabled.return_value = True
+        mock_app = MagicMock()
+        mock_app.config = {
+            "GUEST_TOKEN_JWT_SECRET": "a-very-long-custom-secret-for-prod",
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_guest_token_secret()  # should not raise / exit
+
+    @patch("superset.initialization.sys")
+    @patch("superset.initialization.logger")
+    @patch("superset.initialization.feature_flag_manager")
+    def test_exits_in_production_with_default_secret(
+        self, mock_ff, mock_logger, mock_sys
+    ):
+        """Refuses to start in production when the default secret is used."""
+        mock_ff.is_feature_enabled.return_value = True
+        mock_app = MagicMock()
+        mock_app.debug = False
+        mock_app.config = {
+            "GUEST_TOKEN_JWT_SECRET": CHANGE_ME_GUEST_TOKEN_JWT_SECRET,
+            "TESTING": False,
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_guest_token_secret()
+        mock_sys.exit.assert_called_once_with(1)
+
+    @patch("superset.initialization.sys")
+    @patch("superset.initialization.logger")
+    @patch("superset.initialization.feature_flag_manager")
+    def test_warns_but_continues_in_debug_mode(self, mock_ff, mock_logger, mock_sys):
+        """Warns but does not exit in debug mode."""
+        mock_ff.is_feature_enabled.return_value = True
+        mock_app = MagicMock()
+        mock_app.debug = True
+        mock_app.config = {
+            "GUEST_TOKEN_JWT_SECRET": CHANGE_ME_GUEST_TOKEN_JWT_SECRET,
+            "TESTING": False,
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        initializer.check_guest_token_secret()
+        mock_sys.exit.assert_not_called()

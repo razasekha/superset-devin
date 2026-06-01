@@ -130,7 +130,8 @@ class AsyncQueryManager:
         self._cache = get_cache_backend(app.config)
         logger.debug("Using GAQ Cache backend as %s", type(self._cache).__name__)
 
-        if len(app.config["GLOBAL_ASYNC_QUERIES_JWT_SECRET"]) < 32:
+        jwt_secret = app.config["GLOBAL_ASYNC_QUERIES_JWT_SECRET"]
+        if not jwt_secret or len(jwt_secret) < 32:
             raise AsyncQueryTokenException(
                 "Please provide a JWT secret at least 32 bytes long"
             )
