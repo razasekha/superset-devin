@@ -39,10 +39,10 @@ NAMESPACE = UUID("ee173d1b-ccf3-40aa-941c-985c15224496")
 
 FIRST_KEY = "foo"
 FIRST_KEY_INITIAL_VALUE = {"foo": "bar"}
-FIRST_KEY_UPDATED_VALUE = "foo"
+FIRST_KEY_UPDATED_VALUE = {"foo": "updated"}
 
 SECOND_KEY = "baz"
-SECOND_VALUE = "qwerty"
+SECOND_VALUE = {"second": "qwerty"}
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def cache() -> SupersetMetastoreCache:
     return SupersetMetastoreCache(
         namespace=NAMESPACE,
         default_timeout=600,
-        codec=PickleKeyValueCodec(),
+        codec=JsonKeyValueCodec(),
     )
 
 
@@ -111,6 +111,17 @@ def test_expiry(app_context: AppContext, cache: SupersetMetastoreCache) -> None:
 
     # Clean up after test as well for good measure
     cache.delete(FIRST_KEY)
+
+
+def test_factory_defaults_to_json_codec(app_context: AppContext) -> None:
+    from unittest.mock import MagicMock
+
+    app = MagicMock()
+    app.debug = False
+    config: dict[str, Any] = {}
+    result = SupersetMetastoreCache.factory(app, config, [], {})
+    assert isinstance(result, SupersetMetastoreCache)
+    assert isinstance(result.codec, JsonKeyValueCodec)
 
 
 @pytest.mark.parametrize(

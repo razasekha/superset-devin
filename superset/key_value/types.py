@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import pickle
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, TypedDict, Union
 from uuid import UUID
@@ -78,6 +79,14 @@ class JsonKeyValueCodec(KeyValueCodec):
 
 
 class PickleKeyValueCodec(KeyValueCodec):
+    def __init__(self) -> None:
+        warnings.warn(
+            "PickleKeyValueCodec is deprecated due to the inherent security "
+            "risks of pickle deserialization. Use JsonKeyValueCodec instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     def encode(self, value: dict[Any, Any]) -> bytes:
         return pickle.dumps(value)
 
