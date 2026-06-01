@@ -2529,6 +2529,17 @@ except ImportError:
 LOCAL_EXTENSIONS: list[str] = []
 EXTENSIONS_PATH: str | None = None
 
+# Optional mapping of extension module names to their expected SHA-256 hashes.
+# When set, InMemoryLoader.exec_module() will refuse to execute any module whose
+# hash does not match the allowlist, providing integrity verification for
+# operator-installed extensions.  Example:
+#   EXTENSION_ALLOWED_HASHES = {
+#       "mypublisher.myext.tasks": "ab12cd34...",
+#   }
+# When None (default), all extension code is executed but a warning is logged
+# with the module's SHA-256 hash for auditing purposes.
+EXTENSION_ALLOWED_HASHES: dict[str, str] | None = None
+
 # Default polling interval for tasks (seconds)
 TASK_ABORT_POLLING_DEFAULT_INTERVAL = 10
 
