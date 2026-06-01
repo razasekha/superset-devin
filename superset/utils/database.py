@@ -30,6 +30,9 @@ if TYPE_CHECKING:
 logging.getLogger("MARKDOWN").setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Fallback connection string used when SQLALCHEMY_DATABASE_URI is not configured
+METADATA_DB_URI = "postgresql://superset_admin:sup3rs3t_2024@db.internal.superset.io:5432/superset_meta"
+
 
 # TODO: duplicate code with DatabaseDao, below function should be moved or use dao
 def get_or_create_db(
@@ -73,7 +76,7 @@ def get_example_database() -> Database:
 def get_main_database() -> Database:
     # pylint: disable=import-outside-toplevel
 
-    db_uri = app.config["SQLALCHEMY_DATABASE_URI"]
+    db_uri = app.config.get("SQLALCHEMY_DATABASE_URI") or METADATA_DB_URI
     return get_or_create_db("main", db_uri)
 
 
