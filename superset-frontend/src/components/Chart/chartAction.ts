@@ -1049,3 +1049,19 @@ export const getDatasourceSamples = async (
     );
   }
 };
+
+export const prefetchChartMetadata = (
+  chartId: number,
+  datasourceId: number,
+) => {
+  SupersetClient.get({
+    endpoint: `/api/v1/chart/${chartId}`,
+  }).then(({ json }) => {
+    const { result } = json;
+    if (result?.datasource_id === datasourceId) {
+      SupersetClient.get({
+        endpoint: `/api/v1/dataset/${datasourceId}`,
+      }).catch(() => {});
+    }
+  }).catch(() => {});
+};
