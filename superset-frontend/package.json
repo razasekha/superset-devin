@@ -199,6 +199,7 @@
     "mousetrap": "^1.6.5",
     "mustache": "^4.2.0",
     "nanoid": "^5.1.11",
+    "node-fetch": "2.6.1",
     "ol": "^10.9.0",
     "pretty-ms": "^9.3.0",
     "query-string": "9.3.1",
