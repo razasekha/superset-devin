@@ -670,17 +670,15 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
             sys.exit(1)
 
     def check_guest_token_secret(self) -> None:
-        """Refuse to start with default guest JWT secret when embedding is enabled."""
-        if not feature_flag_manager.is_feature_enabled("EMBEDDED_SUPERSET"):
-            return
+        """Refuse to start with default guest JWT secret in production."""
         if (
             self.config.get("GUEST_TOKEN_JWT_SECRET")
             != CHANGE_ME_GUEST_TOKEN_JWT_SECRET
         ):
             return
         self._log_config_warning(
-            "EMBEDDED_SUPERSET is enabled but GUEST_TOKEN_JWT_SECRET has not "
-            "been changed from its default value.\n"
+            "GUEST_TOKEN_JWT_SECRET has not been changed from its default "
+            "value.\n"
             "The default value is publicly known and must be replaced before "
             "running in production.\n"
             "Set a strong random value in superset_config.py:\n"
@@ -690,24 +688,21 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         if self.superset_app.debug or self.superset_app.config["TESTING"] or is_test():
             return
         logger.error(
-            "Refusing to start: insecure GUEST_TOKEN_JWT_SECRET "
-            "with EMBEDDED_SUPERSET enabled"
+            "Refusing to start: GUEST_TOKEN_JWT_SECRET is set to a publicly "
+            "known default value"
         )
         sys.exit(1)
 
     def check_async_queries_jwt_secret(self) -> None:
-        """Refuse to start with default async queries JWT secret when enabled."""
-        if not feature_flag_manager.is_feature_enabled("GLOBAL_ASYNC_QUERIES"):
-            return
+        """Refuse to start with default async queries JWT secret in production."""
         if (
             self.config.get("GLOBAL_ASYNC_QUERIES_JWT_SECRET")
             != CHANGE_ME_ASYNC_QUERIES_JWT_SECRET
         ):
             return
         self._log_config_warning(
-            "GLOBAL_ASYNC_QUERIES is enabled but "
-            "GLOBAL_ASYNC_QUERIES_JWT_SECRET has not "
-            "been changed from its default value.\n"
+            "GLOBAL_ASYNC_QUERIES_JWT_SECRET has not been changed from its "
+            "default value.\n"
             "The default value is publicly known and must be replaced before "
             "running in production.\n"
             "Set a strong random value (>=32 bytes) in superset_config.py:\n"
@@ -717,8 +712,8 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         if self.superset_app.debug or self.superset_app.config["TESTING"] or is_test():
             return
         logger.error(
-            "Refusing to start: insecure GLOBAL_ASYNC_QUERIES_JWT_SECRET "
-            "with GLOBAL_ASYNC_QUERIES enabled"
+            "Refusing to start: GLOBAL_ASYNC_QUERIES_JWT_SECRET is set to a "
+            "publicly known default value"
         )
         sys.exit(1)
 
