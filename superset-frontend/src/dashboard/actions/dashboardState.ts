@@ -233,7 +233,8 @@ export function savePublished(
         );
         dispatch(togglePublished(isPublished));
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         dispatch(
           addDangerToast(
             t('You do not have permissions to edit this dashboard.'),

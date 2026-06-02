@@ -19,6 +19,7 @@
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/views/store';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import { VizType } from '@superset-ui/core';
 import {
   createCtasDatasource,
@@ -73,7 +74,8 @@ const ExploreCtasResultsButton = ({
         // open new window for data visualization
         exploreChart(formData);
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         dispatch(addDangerToast(errorMessage || t('An error occurred')));
       });
   };

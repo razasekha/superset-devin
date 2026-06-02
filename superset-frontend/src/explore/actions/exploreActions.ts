@@ -26,6 +26,7 @@ import {
   addDangerToast,
   toastActions,
 } from 'src/components/MessageToasts/actions';
+import { logging } from '@apache-superset/core/utils';
 import { Slice } from 'src/types/Chart';
 import { SaveActionType } from 'src/explore/types';
 
@@ -85,7 +86,8 @@ export function saveFaveStar(sliceId: string, isStarred: boolean) {
 
     apiCall
       .then(() => dispatch(toggleFaveStar(!isStarred)))
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         dispatch(
           addDangerToast(t('An error occurred while starring this chart')),
         );

@@ -31,6 +31,7 @@ import {
   Flex,
 } from '@superset-ui/core/components';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import {
   SupersetClient,
   JsonResponse,
@@ -387,7 +388,8 @@ export const SaveDatasetModal = ({
         setDatasetName(getDefaultDatasetName());
         onHide();
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         setLoading(false);
         addDangerToast(t('An error occurred saving dataset'));
       });

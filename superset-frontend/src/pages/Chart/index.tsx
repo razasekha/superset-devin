@@ -30,6 +30,7 @@ import {
   getClientErrorObject,
 } from '@superset-ui/core';
 import { Loading } from '@superset-ui/core/components';
+import { logging } from '@apache-superset/core/utils';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import { getUrlParam } from 'src/utils/urlUtils';
 import { URL_PARAMS } from 'src/constants';
@@ -262,7 +263,8 @@ export default function ExplorePage() {
                   );
                 },
               )
-              .catch(() => {
+              .catch(err => {
+                logging.error(err);
                 if (isStale()) {
                   return;
                 }

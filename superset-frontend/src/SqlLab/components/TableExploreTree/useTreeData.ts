@@ -19,6 +19,7 @@
 import { useMemo, useReducer, useCallback } from 'react';
 import { useAppDispatch } from 'src/views/store';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import {
   Table,
   type TableMetaData,
@@ -181,7 +182,8 @@ const useTreeData = ({
             });
           }
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           reduxDispatch(
             addDangerToast(
               t(

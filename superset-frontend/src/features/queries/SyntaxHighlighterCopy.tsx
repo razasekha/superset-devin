@@ -19,6 +19,7 @@
 import { useEffect } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
+import { logging } from '@apache-superset/core/utils';
 import CodeSyntaxHighlighter, {
   SupportedLanguage,
   CodeSyntaxHighlighterProps,
@@ -93,7 +94,8 @@ export default function SyntaxHighlighterCopy({
           addSuccessToast(t('Code Copied!'));
         }
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         if (addDangerToast) {
           addDangerToast(t('Sorry, your browser does not support copying.'));
         }

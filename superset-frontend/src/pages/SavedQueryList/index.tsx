@@ -18,6 +18,7 @@
  */
 
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import {
   FeatureFlag,
   isFeatureEnabled,
@@ -241,7 +242,8 @@ function SavedQueryList({
       .then(() => {
         addSuccessToast(t('Link Copied!'));
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         addDangerToast(t('Sorry, your browser does not support copying.'));
       });
     if (openInNewWindow) {

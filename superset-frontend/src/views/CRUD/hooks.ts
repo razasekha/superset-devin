@@ -19,6 +19,7 @@
 import rison from 'rison';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import {
   makeApi,
   SupersetClient,
@@ -754,7 +755,8 @@ export const copyQueryLink = (
     .then(() => {
       addSuccessToast(t('Link Copied!'));
     })
-    .catch(() => {
+    .catch(err => {
+      logging.error(err);
       addDangerToast(t('Sorry, your browser does not support copying.'));
     });
 };
