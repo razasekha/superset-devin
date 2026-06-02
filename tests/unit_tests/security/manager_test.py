@@ -21,7 +21,7 @@ import json  # noqa: TID251
 from types import SimpleNamespace
 
 import pytest
-from flask_appbuilder.security.sqla.models import Role, User
+from flask_appbuilder.security.sqla.models import PermissionView, Role, User
 from pytest_mock import MockerFixture
 
 from superset.common.query_object import QueryObject
@@ -1547,3 +1547,69 @@ def test_validate_child_in_parent_multilayer_null_params(
     assert not sm._validate_child_in_parent_multilayer(
         child_slice_id=1, parent_slice=parent_slice
     )
+
+
+def _make_pvm(
+    mocker: MockerFixture,
+    pvm_id: int,
+    view_name: str,
+    perm_name: str,
+) -> PermissionView:
+    """Helper to build a lightweight mock PVM."""
+    pvm = mocker.MagicMock(spec=PermissionView)
+    pvm.id = pvm_id
+    pvm.view_menu.name = view_name
+    pvm.permission.name = perm_name
+    return pvm
+
+
+def test_get_pvms_from_builtin_role_uses_preloaded_pvms(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """When pvms are passed, no additional DB query should be issued."""
+    sm = SupersetSecurityManager(appbuilder)
+    pvm1 = _make_pvm(mocker, 1, "Dashboard", "can_read")
+    pvm2 = _make_pvm(mocker, 2, "Chart", "can_write")
+
+    sm.builtin_roles = {"TestRole": [(".*", "can_read")]}
+    spy = mocker.patch.object(sm, "_get_all_pvms")
+
+    result = sm._get_pvms_from_builtin_role("TestRole", pvms=[pvm1, pvm2])
+
+    spy.assert_not_called()
+    assert result == [pvm1]
+
+
+def test_get_pvms_from_builtin_role_falls_back_to_get_all_pvms(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """When pvms is None, _get_all_pvms should be called."""
+    sm = SupersetSecurityManager(appbuilder)
+    pvm1 = _make_pvm(mocker, 1, "Dashboard", "can_read")
+
+    sm.builtin_roles = {"TestRole": [("Dashboard", "can_read")]}
+    mock_get_all = mocker.patch.object(sm, "_get_all_pvms", return_value=[pvm1])
+
+    result = sm._get_pvms_from_builtin_role("TestRole")
+
+    mock_get_all.assert_called_once()
+    assert result == [pvm1]
+
+
+def test_get_pvms_from_builtin_role_deduplicates(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """A PVM matching multiple regex patterns should appear only once."""
+    sm = SupersetSecurityManager(appbuilder)
+    pvm = _make_pvm(mocker, 1, "Dashboard", "can_read")
+
+    sm.builtin_roles = {
+        "TestRole": [("Dashboard", "can_read"), (".*", "can_read")],
+    }
+
+    result = sm._get_pvms_from_builtin_role("TestRole", pvms=[pvm])
+    assert len(result) == 1
+    assert result == [pvm]

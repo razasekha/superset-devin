@@ -1529,6 +1529,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                 public_role_like,
                 self.auth_role_public,
                 merge=True,
+                pvms=pvms,
             )
         self.create_missing_perms()
         self.clean_perms()
@@ -1547,23 +1548,35 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         )
         return [p for p in pvms if p.permission and p.view_menu]
 
-    def _get_pvms_from_builtin_role(self, role_name: str) -> list[PermissionView]:
+    def _get_pvms_from_builtin_role(
+        self,
+        role_name: str,
+        pvms: Optional[list[PermissionView]] = None,
+    ) -> list[PermissionView]:
         """
         Gets a list of model PermissionView permissions inferred from a builtin role
-        definition
+        definition.
+
+        :param role_name: The builtin role name to look up
+        :param pvms: Optional pre-loaded list of all PVMs to avoid a redundant
+            database round-trip when the caller already has one (e.g.
+            ``sync_role_definitions``)
         """
         role_from_permissions_names = self.builtin_roles.get(role_name, [])
-        all_pvms = self.session.query(PermissionView).all()
-        role_from_permissions = []
+        all_pvms = pvms if pvms is not None else self._get_all_pvms()
+        seen: set[int] = set()
+        role_from_permissions: list[PermissionView] = []
         for pvm_regex in role_from_permissions_names:
             view_name_regex = pvm_regex[0]
             permission_name_regex = pvm_regex[1]
             for pvm in all_pvms:
-                if re.match(view_name_regex, pvm.view_menu.name) and re.match(
-                    permission_name_regex, pvm.permission.name
+                if (
+                    pvm.id not in seen
+                    and re.match(view_name_regex, pvm.view_menu.name)
+                    and re.match(permission_name_regex, pvm.permission.name)
                 ):
-                    if pvm not in role_from_permissions:
-                        role_from_permissions.append(pvm)
+                    seen.add(pvm.id)
+                    role_from_permissions.append(pvm)
         return role_from_permissions
 
     def find_roles_by_id(self, role_ids: list[int]) -> list[Role]:
@@ -1576,7 +1589,11 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         return query.all()
 
     def copy_role(
-        self, role_from_name: str, role_to_name: str, merge: bool = True
+        self,
+        role_from_name: str,
+        role_to_name: str,
+        merge: bool = True,
+        pvms: Optional[list[PermissionView]] = None,
     ) -> None:
         """
         Copies permissions from a role to another.
@@ -1587,12 +1604,16 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         :param role_to_name: The FAB role name from where the permissions are copied to
         :param merge: If merge is true, keep data access permissions
             if they already exist on the target role
+        :param pvms: Optional pre-loaded list of all PVMs to avoid a redundant
+            database fetch
         """
 
         logger.info("Copy/Merge %s to %s", role_from_name, role_to_name)
         # If it's a builtin role extract permissions from it
         if role_from_name in self.builtin_roles:
-            role_from_permissions = self._get_pvms_from_builtin_role(role_from_name)
+            role_from_permissions = self._get_pvms_from_builtin_role(
+                role_from_name, pvms=pvms
+            )
         else:
             role_from_permissions = list(self.find_role(role_from_name).permissions)
         role_to = self.add_role(role_to_name)
