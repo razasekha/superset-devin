@@ -670,17 +670,15 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
             sys.exit(1)
 
     def check_guest_token_secret(self) -> None:
-        """Refuse to start with default guest JWT secret when embedding is enabled."""
-        if not feature_flag_manager.is_feature_enabled("EMBEDDED_SUPERSET"):
-            return
+        """Refuse to start with default guest JWT secret."""
         if (
             self.config.get("GUEST_TOKEN_JWT_SECRET")
             != CHANGE_ME_GUEST_TOKEN_JWT_SECRET
         ):
             return
-        self._log_config_warning(
-            "EMBEDDED_SUPERSET is enabled but GUEST_TOKEN_JWT_SECRET has not "
-            "been changed from its default value.\n"
+        warning = (
+            "A default GUEST_TOKEN_JWT_SECRET was detected, please use "
+            "superset_config.py to override it.\n"
             "The default value is publicly known and must be replaced before "
             "running in production.\n"
             "Set a strong random value in superset_config.py:\n"
@@ -688,11 +686,11 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
             "'<output of: openssl rand -base64 42>'"
         )
         if self.superset_app.debug or self.superset_app.config["TESTING"] or is_test():
+            logger.warning("Debug mode identified with default GUEST_TOKEN_JWT_SECRET")
+            self._log_config_warning(warning)
             return
-        logger.error(
-            "Refusing to start: insecure GUEST_TOKEN_JWT_SECRET "
-            "with EMBEDDED_SUPERSET enabled"
-        )
+        self._log_config_warning(warning)
+        logger.error("Refusing to start due to insecure GUEST_TOKEN_JWT_SECRET")
         sys.exit(1)
 
     def check_async_queries_jwt_secret(self) -> None:
@@ -800,13 +798,13 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         """
         self.pre_init()
         self.check_secret_key()
+        self.check_guest_token_secret()
         self.configure_session()
         # Configuration of logging must be done first to apply the formatter properly
         self.configure_logging()
         # Configuration of feature_flags must be done first to allow init features
         # conditionally
         self.configure_feature_flags()
-        self.check_guest_token_secret()
         self.check_async_queries_jwt_secret()
         self.configure_db_encrypt()
         self.setup_db()
