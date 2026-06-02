@@ -119,7 +119,7 @@ class DummyStrategy(Strategy):  # pylint: disable=too-few-public-methods
     name = "dummy"
 
     def get_tasks(self) -> list[CacheWarmupTask]:
-        return [get_task(chart) for chart in db.session.query(Slice).all()]
+        return [get_task(chart) for chart in db.session.query(Slice).yield_per(100)]
 
 
 class TopNDashboardsStrategy(Strategy):  # pylint: disable=too-few-public-methods
