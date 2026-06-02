@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import platform
+import re
 import socket
 import subprocess
 
@@ -53,6 +54,21 @@ def is_hostname_valid(host: str) -> bool:
         return False
 
 
+# Matches valid hostnames (RFC 952 / RFC 1123), IPv4 addresses,
+# and bracketed or bare IPv6 addresses.
+_VALID_HOST_RE = re.compile(
+    r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?"
+    r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*"
+    r"|\[?[a-fA-F0-9:]+\]?)$"
+)
+
+
+def _validate_host(host: str) -> None:
+    """Raise ValueError if host contains unexpected characters."""
+    if not host or not _VALID_HOST_RE.match(host):
+        raise ValueError(f"Invalid hostname: {host!r}")
+
+
 def is_host_up(host: str) -> bool:
     """
     Ping a host to see if it's up.
@@ -60,11 +76,17 @@ def is_host_up(host: str) -> bool:
     Note that if we don't get a response the host might still be up,
     since many firewalls block ICMP packets.
     """
+    _validate_host(host)
     param = "-n" if platform.system().lower() == "windows" else "-c"
     command = ["ping", param, "1", host]
     try:
-        output = subprocess.call(command, timeout=PING_TIMEOUT)  # noqa: S603
+        result = subprocess.run(  # noqa: S603
+            command,
+            timeout=PING_TIMEOUT,
+            capture_output=True,
+            check=False,
+        )
     except subprocess.TimeoutExpired:
         return False
 
-    return output == 0
+    return result.returncode == 0
