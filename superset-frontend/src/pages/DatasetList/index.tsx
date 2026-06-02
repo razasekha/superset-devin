@@ -17,6 +17,7 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import {
   getExtensionsRegistry,
   SupersetClient,
@@ -368,7 +369,10 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
                 ),
                 totalCount: json?.count ?? 0,
               }))
-              .catch(() => ({ data: [], totalCount: 0 }))
+              .catch(err => {
+                logging.error(err);
+                return { data: [], totalCount: 0 };
+              })
           : Promise.resolve({ data: [], totalCount: 0 }),
       ]);
 
@@ -458,7 +462,8 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           setDatasets(json.result);
           setDatasetCount(json.count);
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           addDangerToast(
             t('An error occurred while fetching %s', datasetsLabelLower()),
           );
@@ -569,7 +574,8 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           json.result.columns = [...addCertificationFields];
           setDatasetCurrentlyEditing(json.result);
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           addDangerToast(
             t(
               'An error occurred while fetching %s related data',

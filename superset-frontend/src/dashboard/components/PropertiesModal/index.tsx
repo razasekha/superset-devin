@@ -37,6 +37,7 @@ import {
   getClientErrorObject,
 } from '@superset-ui/core';
 
+import { logging } from '@apache-superset/core/utils';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import {
   OWNER_TEXT_LABEL_PROP,
@@ -484,7 +485,8 @@ const PropertiesModal = ({
           const fetchedThemes = json.result;
           setThemes(fetchedThemes);
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           addDangerToast(
             t('An error occurred while fetching available themes'),
           );

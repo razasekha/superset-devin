@@ -29,6 +29,7 @@ import {
   getClientErrorObject,
 } from '@superset-ui/core';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import { invert, mapKeys } from 'lodash';
 
 import { now } from '@superset-ui/core/utils/dates';
@@ -1104,7 +1105,8 @@ export const addSavedQueryToTabState =
       : Promise.resolve();
 
     return sync
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         dispatch(addDangerToast(t('Your query was not properly saved')));
       })
       .then(() => {
@@ -1730,7 +1732,8 @@ export function createCtasDatasource(
 
         return result;
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         const errorMsg = t('An error occurred while creating the data source');
         dispatch(createDatasourceFailed(errorMsg));
         return Promise.reject(new Error(errorMsg));

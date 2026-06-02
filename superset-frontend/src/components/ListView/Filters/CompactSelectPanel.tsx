@@ -28,6 +28,7 @@ import {
 } from 'react';
 import { debounce } from 'lodash';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import { useTheme, styled, css } from '@apache-superset/core/theme';
 import {
   Icons,
@@ -190,7 +191,8 @@ function CompactSelectPanel(
       .then(result => {
         if (!cancelled) setRemoteOptions(result?.data ?? []);
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         if (!cancelled) setRemoteOptions([]);
       })
       .finally(() => {

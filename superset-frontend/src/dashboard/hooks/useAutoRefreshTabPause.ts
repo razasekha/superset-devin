@@ -17,6 +17,7 @@
  * under the License.
  */
 import { useCallback, useRef, useEffect } from 'react';
+import { logging } from '@apache-superset/core/utils';
 import { useTabVisibility } from './useTabVisibility';
 import { useRealTimeDashboard } from './useRealTimeDashboard';
 import { AutoRefreshStatus } from '../types/autoRefresh';
@@ -85,7 +86,8 @@ export function useAutoRefreshTabPause({
         .then(() => {
           onRestartTimer();
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           onRestartTimer();
         });
 

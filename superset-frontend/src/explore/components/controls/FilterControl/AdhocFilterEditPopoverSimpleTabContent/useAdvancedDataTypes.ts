@@ -18,6 +18,7 @@
  */
 import { useCallback, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import { ensureIsArray, SupersetClient } from '@superset-ui/core';
 import { debounce } from 'lodash';
 import rison from 'rison';
@@ -63,7 +64,8 @@ const useAdvancedDataTypes = (validHandler: (isValid: boolean) => void) => {
             // Changed due to removal of status field
             validHandler(!json.result.error_message);
           })
-          .catch(() => {
+          .catch(err => {
+            logging.error(err);
             setAdvancedDataTypesState({
               parsedAdvancedDataType: '',
               advancedDataTypeOperatorList:

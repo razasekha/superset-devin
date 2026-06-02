@@ -20,6 +20,7 @@
 import { useState, useCallback } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
+import { logging } from '@apache-superset/core/utils';
 import { Popover, Tooltip } from '@superset-ui/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
@@ -96,7 +97,8 @@ export default function TaskStackTracePopover({
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         addDangerToast(t('Failed to copy stack trace to clipboard'));
       });
   }, [stackTrace, addDangerToast]);

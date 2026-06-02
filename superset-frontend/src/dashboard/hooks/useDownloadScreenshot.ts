@@ -151,7 +151,8 @@ export const useDownloadScreenshot = (
         }
         isFetching = true;
         checkImageReady(cacheKey)
-          .catch(() => {
+          .catch(err => {
+            logging.error(err);
             retries += 1;
           })
           .finally(() => {

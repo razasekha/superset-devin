@@ -18,6 +18,7 @@
  */
 import { Component, cloneElement, ReactElement } from 'react';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import { css, SupersetTheme } from '@apache-superset/core/theme';
 import copyTextToClipboard from 'src/utils/copy';
 import { Tooltip } from '@superset-ui/core/components';
@@ -74,7 +75,8 @@ class CopyToClip extends Component<CopyToClipboardProps> {
       .then(() => {
         this.props.addSuccessToast(t('Copied to clipboard!'));
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         this.props.addDangerToast(
           t(
             'Sorry, your browser does not support copying. Use Ctrl / Cmd + C!',

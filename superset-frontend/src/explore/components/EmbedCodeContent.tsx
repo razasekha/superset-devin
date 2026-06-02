@@ -25,6 +25,7 @@ import {
   useState,
 } from 'react';
 import { LatestQueryFormData } from '@superset-ui/core';
+import { logging } from '@apache-superset/core/utils';
 import { css } from '@apache-superset/core/theme';
 import { t } from '@apache-superset/core/translation';
 import { Input, Space, Typography } from '@superset-ui/core/components';
@@ -67,7 +68,8 @@ const EmbedCodeContent: FC<EmbedCodeContentProps> = ({
           setErrorMessage('');
         }
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         setErrorMessage(t('Error'));
         addDangerToast?.(t('Sorry, something went wrong. Try again later.'));
       });

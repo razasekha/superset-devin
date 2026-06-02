@@ -18,6 +18,7 @@
  */
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import Tabs from '@superset-ui/core/components/Tabs';
 import { RoleObject } from 'src/pages/RolesList';
 import {
@@ -183,7 +184,8 @@ function RoleListEditModal({
           })),
         );
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         if (!cancelled) {
           addDangerToast(t('There was an error loading permissions.'));
         }

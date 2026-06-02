@@ -20,6 +20,7 @@ import { PureComponent, ReactNode } from 'react';
 import rison from 'rison';
 import { t } from '@apache-superset/core/translation';
 import { isDefined, JsonResponse, SupersetClient } from '@superset-ui/core';
+import { logging } from '@apache-superset/core/utils';
 import { styled } from '@apache-superset/core/theme';
 import { withTheme, Theme } from '@emotion/react';
 import { getUrlParam } from 'src/utils/urlUtils';
@@ -211,7 +212,8 @@ export class ChartCreation extends PureComponent<
           const datasource = r.data[0];
           this.setState({ datasource, loading: false });
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           this.setState({ loading: false });
         });
       this.props.addSuccessToast(t('The dataset has been saved'));

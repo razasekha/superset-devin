@@ -29,6 +29,7 @@ import {
   ContextMenuFilters,
   AdhocFilter,
 } from '@superset-ui/core';
+import { logging } from '@apache-superset/core/utils';
 import { Alert } from '@apache-superset/core/components';
 import { css, useTheme } from '@apache-superset/core/theme';
 import { useDispatch, useSelector } from 'react-redux';
@@ -101,7 +102,8 @@ const ModalFooter = ({ formData, closeModal }: ModalFooterProps) => {
           `/explore/?form_data_key=${key}&dashboard_page_id=${dashboardPageId}`,
         );
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         addDangerToast(t('Failed to generate chart edit URL'));
       });
   }, [
@@ -411,7 +413,8 @@ export default function DrillByModal({
       .then(queriesResponse => {
         setChartDataResult(queriesResponse);
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         addDangerToast(t('Failed to load chart data.'));
       })
       .finally(() => {
@@ -503,7 +506,8 @@ export default function DrillByModal({
         .then(queriesResponse => {
           setChartDataResult(queriesResponse);
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           addDangerToast(t('Failed to load chart data.'));
         })
         .finally(() => {

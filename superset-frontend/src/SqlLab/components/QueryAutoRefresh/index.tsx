@@ -18,6 +18,7 @@
  */
 import { useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { logging } from '@apache-superset/core/utils';
 import { useAppDispatch } from 'src/views/store';
 import { isObject } from 'lodash';
 import rison from 'rison';
@@ -136,7 +137,8 @@ function QueryAutoRefresh({
             }
           }
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           controller.abort();
         })
         .finally(() => {

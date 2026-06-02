@@ -17,6 +17,7 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import {
   getExtensionsRegistry,
   SupersetClient,
@@ -206,7 +207,8 @@ function DatabaseList({
           setCombinedItems(json.result);
           setCombinedCount(json.count);
         })
-        .catch(() => {
+        .catch(err => {
+          logging.error(err);
           addDangerToast(t('An error occurred while fetching connections'));
         })
         .finally(() => {

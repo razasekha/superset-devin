@@ -19,6 +19,7 @@
 /* eslint camelcase: 0 */
 import { SupersetClient } from '@superset-ui/core';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import rison from 'rison';
 import {
   addDangerToast,
@@ -118,9 +119,10 @@ export function fetchUISpecificReport({
           ),
         );
       })
-      .catch(() =>
-        dispatch(addDangerToast(t('There was an issue fetching reports.'))),
-      );
+      .catch(err => {
+        logging.error(err);
+        dispatch(addDangerToast(t('There was an issue fetching reports.')));
+      });
   };
 }
 
@@ -230,7 +232,8 @@ export function toggleActive(report: ReportObject, isActive: boolean) {
         active: isActive,
       }),
     })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         dispatch(
           addDangerToast(
             t('We were unable to activate or deactivate this report.'),
@@ -268,7 +271,8 @@ export function deleteActiveReport(report: DeletableReport) {
         dispatch({ type: DELETE_REPORT, report } as DeleteReportAction);
         dispatch(addSuccessToast(t('Deleted: %s', report.name)));
       })
-      .catch(() => {
+      .catch(err => {
+        logging.error(err);
         dispatch(addDangerToast(t('Your report could not be deleted')));
       });
   };

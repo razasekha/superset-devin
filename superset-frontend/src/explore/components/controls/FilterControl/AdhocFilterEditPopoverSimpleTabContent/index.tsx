@@ -26,6 +26,7 @@ import {
   type SelectValue,
 } from '@superset-ui/core/components';
 import { t } from '@apache-superset/core/translation';
+import { logging } from '@apache-superset/core/utils';
 import {
   isFeatureEnabled,
   FeatureFlag,
@@ -449,7 +450,8 @@ const AdhocFilterEditPopoverSimpleTabContent: FC<Props> = props => {
             );
             setLoadingComparatorSuggestions(false);
           })
-          .catch(() => {
+          .catch(err => {
+            logging.error(err);
             setSuggestions([]);
             setLoadingComparatorSuggestions(false);
           });
