@@ -24,6 +24,7 @@ from superset.app import AppRootMiddleware, create_app, SupersetApp
 from superset.constants import (
     CHANGE_ME_ASYNC_QUERIES_JWT_SECRET,
     CHANGE_ME_GUEST_TOKEN_JWT_SECRET,
+    CHANGE_ME_SECRET_KEY,
 )
 from superset.initialization import SupersetAppInitializer
 
@@ -377,3 +378,61 @@ class TestCheckGuestTokenSecret:
         initializer = SupersetAppInitializer(mock_app)
         initializer.check_guest_token_secret()
         mock_sys.exit.assert_not_called()
+
+
+class TestCheckSecretKey:
+    def _make_initializer(
+        self, secret_key: str, debug: bool = False, testing: bool = False
+    ) -> SupersetAppInitializer:
+        mock_app = MagicMock()
+        mock_app.debug = debug
+        mock_app.config = {
+            "SECRET_KEY": secret_key,
+            "TESTING": testing,
+        }
+        initializer = SupersetAppInitializer(mock_app)
+        return initializer
+
+    @patch("superset.initialization.sys.exit")
+    @patch("superset.initialization.logger")
+    def test_empty_secret_key_exits(self, mock_logger: MagicMock, mock_exit: MagicMock):
+        """An empty SECRET_KEY must cause sys.exit(1)."""
+        initializer = self._make_initializer("")
+        initializer.check_secret_key()
+        mock_exit.assert_called_once_with(1)
+        mock_logger.error.assert_called_once_with(
+            "Refusing to start due to missing SECRET_KEY"
+        )
+
+    @patch("superset.initialization.sys.exit")
+    @patch("superset.initialization.logger")
+    def test_default_secret_key_exits(
+        self, mock_logger: MagicMock, mock_exit: MagicMock
+    ):
+        """The well-known default SECRET_KEY must cause sys.exit(1)."""
+        initializer = self._make_initializer(CHANGE_ME_SECRET_KEY)
+        initializer.check_secret_key()
+        mock_exit.assert_called_once_with(1)
+        mock_logger.error.assert_called_once_with(
+            "Refusing to start due to insecure SECRET_KEY"
+        )
+
+    @patch("superset.initialization.sys.exit")
+    @patch("superset.initialization.logger")
+    def test_default_secret_key_exits_even_in_debug(
+        self, mock_logger: MagicMock, mock_exit: MagicMock
+    ):
+        """The well-known default must be rejected even in debug mode."""
+        initializer = self._make_initializer(CHANGE_ME_SECRET_KEY, debug=True)
+        initializer.check_secret_key()
+        mock_exit.assert_called_once_with(1)
+
+    @patch("superset.initialization.sys.exit")
+    @patch("superset.initialization.logger")
+    def test_valid_secret_key_passes(
+        self, mock_logger: MagicMock, mock_exit: MagicMock
+    ):
+        """A properly configured SECRET_KEY must not trigger sys.exit."""
+        initializer = self._make_initializer("a-strong-random-secret-key")
+        initializer.check_secret_key()
+        mock_exit.assert_not_called()
