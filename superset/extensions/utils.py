@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import hashlib
 import importlib.abc
 import importlib.util
 import logging
@@ -39,6 +40,20 @@ FRONTEND_REGEX = re.compile(r"^frontend/dist/([^/]+)$")
 BACKEND_REGEX = re.compile(r"^backend/src/(.+)$")
 
 
+def _compute_sha256(source: str | bytes) -> str:
+    """Compute the SHA-256 hex digest of source code."""
+    data = source.encode("utf-8") if isinstance(source, str) else source
+    return hashlib.sha256(data).hexdigest()
+
+
+def _get_allowed_hashes() -> dict[str, str] | None:
+    """Return the EXTENSION_ALLOWED_HASHES config, or None if unset."""
+    try:
+        return current_app.config.get("EXTENSION_ALLOWED_HASHES")
+    except RuntimeError:
+        return None
+
+
 class InMemoryLoader(importlib.abc.Loader):
     def __init__(
         self, module_name: str, source: str, is_package: bool, origin: str
@@ -55,7 +70,39 @@ class InMemoryLoader(importlib.abc.Loader):
         )
         if self.is_package:
             module.__path__ = []
-        # Compile with filename for proper tracebacks
+
+        source_hash = _compute_sha256(self.source)
+
+        if (allowed_hashes := _get_allowed_hashes()) is not None:
+            expected = allowed_hashes.get(self.module_name)
+            if expected is None:
+                raise ImportError(
+                    f"Extension module {self.module_name!r} blocked: "
+                    f"not listed in EXTENSION_ALLOWED_HASHES "
+                    f"(sha256={source_hash})"
+                )
+            if source_hash != expected:
+                raise ImportError(
+                    f"Extension module {self.module_name!r} blocked: "
+                    f"hash mismatch (expected={expected}, "
+                    f"actual={source_hash})"
+                )
+            logger.info(
+                "Executing verified extension module %s (origin=%s, sha256=%s)",
+                self.module_name,
+                self.origin,
+                source_hash,
+            )
+        else:
+            logger.warning(
+                "Executing unverified extension module %s "
+                "(origin=%s, sha256=%s). Set EXTENSION_ALLOWED_HASHES "
+                "to enforce integrity verification.",
+                self.module_name,
+                self.origin,
+                source_hash,
+            )
+
         code = compile(self.source, self.origin, "exec")
         exec(code, module.__dict__)  # noqa: S102
 
