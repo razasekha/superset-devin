@@ -24,7 +24,8 @@ import {
   getExtensionsRegistry,
   JsonObject,
 } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { styled, ThemeMode } from '@apache-superset/core/theme';
+import { useThemeContext } from 'src/theme/ThemeProvider';
 import rison from 'rison';
 import { Collapse, ListViewCard } from '@superset-ui/core/components';
 import { User } from 'src/types/bootstrapTypes';
@@ -46,6 +47,7 @@ import {
   mq,
 } from 'src/views/CRUD/utils';
 import { Switch } from '@superset-ui/core/components/Switch';
+import { Icons } from '@superset-ui/core/components/Icons';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { TableTab } from 'src/views/CRUD/types';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
@@ -320,26 +322,57 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
   const isRecentActivityLoading =
     !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
 
+  const { themeMode, setThemeMode, canSetMode } = useThemeContext();
+  const isDarkMode = themeMode === ThemeMode.DARK;
+
+  const handleThemeModeToggle = () => {
+    setThemeMode(isDarkMode ? ThemeMode.DEFAULT : ThemeMode.DARK);
+  };
+
   const menuData: SubMenuProps = {
     activeChild: 'Home',
     name: t('Home'),
   };
 
+  const menuButtons: SubMenuProps['buttons'] = [];
+
+  if (canSetMode()) {
+    menuButtons.push({
+      name: (
+        <WelcomeNav>
+          <div className="switch">
+            {isDarkMode ? <Icons.MoonOutlined /> : <Icons.SunOutlined />}
+            <Switch
+              checked={isDarkMode}
+              onClick={handleThemeModeToggle}
+              data-test="theme-mode-toggle"
+            />
+            <span>{isDarkMode ? t('Dark mode') : t('Light mode')}</span>
+          </div>
+        </WelcomeNav>
+      ),
+      onClick: handleThemeModeToggle,
+      buttonStyle: 'link',
+    });
+  }
+
   if (isThumbnailsEnabled) {
-    menuData.buttons = [
-      {
-        name: (
-          <WelcomeNav>
-            <div className="switch">
-              <Switch checked={checked} onClick={handleToggle} />
-              <span>{t('Thumbnails')}</span>
-            </div>
-          </WelcomeNav>
-        ),
-        onClick: handleToggle,
-        buttonStyle: 'link',
-      },
-    ];
+    menuButtons.push({
+      name: (
+        <WelcomeNav>
+          <div className="switch">
+            <Switch checked={checked} onClick={handleToggle} />
+            <span>{t('Thumbnails')}</span>
+          </div>
+        </WelcomeNav>
+      ),
+      onClick: handleToggle,
+      buttonStyle: 'link',
+    });
+  }
+
+  if (menuButtons.length > 0) {
+    menuData.buttons = menuButtons;
   }
 
   return (
