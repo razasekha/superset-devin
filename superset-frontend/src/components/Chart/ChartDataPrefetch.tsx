@@ -18,6 +18,7 @@
  */
 import { useEffect, useState, ReactNode, FC } from 'react';
 import { makeApi } from '@superset-ui/core';
+import { logging } from '@apache-superset/core/utils';
 
 interface ChartDataPrefetchProps {
   chartId: number;
@@ -42,7 +43,9 @@ const ChartDataPrefetch: FC<ChartDataPrefetchProps> = ({
       setPrefetched(true);
     };
 
-    fetchData().catch(() => {});
+    fetchData().catch(error => {
+      logging.error('Failed to prefetch chart data for chart %d:', chartId, error);
+    });
   }, [chartId, endpoint]);
 
   return <>{children}</>;
