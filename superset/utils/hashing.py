@@ -26,12 +26,11 @@ from superset.utils import json
 
 logger = logging.getLogger(__name__)
 
-HashAlgorithm = Literal["md5", "sha256"]
+HashAlgorithm = Literal["sha256"]
 
 # Hash function lookup table for efficient dispatch
 _HASH_FUNCTIONS: dict[str, Callable[[bytes], str]] = {
     "sha256": lambda data: hashlib.sha256(data).hexdigest(),
-    "md5": lambda data: hashlib.md5(data).hexdigest(),  # noqa: S324
 }
 
 
@@ -40,7 +39,7 @@ def get_hash_algorithm() -> HashAlgorithm:
     Get the configured hash algorithm for non-cryptographic purposes.
 
     Returns:
-        Hash algorithm name ('md5' or 'sha256')
+        Hash algorithm name ('sha256')
     """
     return current_app.config["HASH_ALGORITHM"]
 
@@ -59,8 +58,6 @@ def hash_from_str(val: str, algorithm: Optional[HashAlgorithm] = None) -> str:
     Examples:
         >>> hash_from_str("test")  # Uses configured algorithm
         '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
-        >>> hash_from_str("test", algorithm="md5")  # Force MD5
-        '098f6bcd4621d373cade4e832627b4f6'
     """
     if algorithm is None:
         algorithm = get_hash_algorithm()

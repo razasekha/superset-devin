@@ -39,7 +39,6 @@ CACHE_IMPORT_PATH = "superset.extensions.metastore_cache.SupersetMetastoreCache"
 # Hash function lookup table matching superset.utils.hashing
 _HASH_METHODS: dict[str, Callable[..., Any]] = {
     "sha256": hashlib.sha256,
-    "md5": hashlib.md5,
 }
 
 
@@ -63,7 +62,7 @@ class ConfigurableHashMethod:
             data: Optional initial data to hash
 
         Returns:
-            A hashlib hash object (e.g., sha256 or md5)
+            A hashlib hash object (e.g., sha256)
 
         Raises:
             ValueError: If HASH_ALGORITHM is set to an unsupported value
