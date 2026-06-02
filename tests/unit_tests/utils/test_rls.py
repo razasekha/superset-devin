@@ -55,7 +55,7 @@ def test_collect_rls_predicates_for_sql_logs_warning_on_parse_failure(
         side_effect=ValueError("unparsable SQL"),
     ):
         with caplog.at_level(logging.WARNING, logger="superset.utils.rls"):
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="unparsable SQL"):
                 collect_rls_predicates_for_sql(
                     sql="NOT VALID SQL",
                     database=database,
