@@ -123,3 +123,19 @@ class TestSlice:
 
         result = slc.datasource_url()
         assert result is None
+
+    def test_icons_escapes_datasource_and_url(self):
+        """icons property escapes datasource name and edit URL to prevent XSS."""
+        slc = Slice()
+        slc.id = 1
+
+        mock_table = MagicMock()
+        mock_table.url = '/edit?id=1"><script>alert(1)</script>'
+        mock_table.__str__ = lambda self: "<img src=x onerror=alert(1)>"
+        slc.table = mock_table
+
+        result = slc.icons
+        assert "<script>" not in result
+        assert "onerror" not in result
+        assert "&lt;script&gt;" in result or "&#" in result
+        assert "&lt;img" in result or "&#" in result
