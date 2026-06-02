@@ -909,6 +909,57 @@ class TestCore(SupersetTestCase):
         assert resp.headers["Location"] == expected_url
         assert resp.status_code == 302
 
+    @mock.patch("superset.views.core.request")
+    @mock.patch(
+        "superset.commands.dashboard.permalink.get.GetDashboardPermalinkCommand.run"
+    )
+    def test_dashboard_permalink_native_filters_encoded(
+        self, get_dashboard_permalink_mock, request_mock
+    ):
+        request_mock.query_string = b""
+        get_dashboard_permalink_mock.return_value = {
+            "dashboardId": 1,
+            "state": {
+                "urlParams": [
+                    ("native_filters", "(NATIVE_FILTER-abc:(__cache:(l:[])))"),
+                ],
+            },
+        }
+        self.login(ADMIN_USERNAME)
+        resp = self.client.get("superset/dashboard/p/123/")
+
+        assert resp.status_code == 302
+        location = resp.headers["Location"]
+        assert "native_filters=" in location
+        # The value must be URL-encoded, not raw
+        assert "(NATIVE_FILTER" not in location
+        assert "%28NATIVE_FILTER" in location
+
+    @mock.patch("superset.views.core.request")
+    @mock.patch(
+        "superset.commands.dashboard.permalink.get.GetDashboardPermalinkCommand.run"
+    )
+    def test_dashboard_permalink_native_filters_no_injection(
+        self, get_dashboard_permalink_mock, request_mock
+    ):
+        request_mock.query_string = b""
+        get_dashboard_permalink_mock.return_value = {
+            "dashboardId": 1,
+            "state": {
+                "urlParams": [
+                    ("native_filters", "val&injected=1"),
+                ],
+            },
+        }
+        self.login(ADMIN_USERNAME)
+        resp = self.client.get("superset/dashboard/p/123/")
+
+        assert resp.status_code == 302
+        location = resp.headers["Location"]
+        # '&' in the value must be encoded, preventing parameter injection
+        assert "injected=1" not in location
+        assert "native_filters=val%26injected%3D1" in location
+
 
 class TestLocalePatch(SupersetTestCase):
     MOCK_LANGUAGES = (
