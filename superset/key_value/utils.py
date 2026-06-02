@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import hashlib
-from hashlib import md5
 from secrets import token_urlsafe
 from typing import Any
 from uuid import UUID, uuid3
@@ -68,13 +67,6 @@ def decode_permalink_id(key: str, salt: str) -> int:
     raise KeyValueParseKeyError(_("Invalid permalink key"))
 
 
-def _uuid_namespace_from_md5(seed: str) -> UUID:
-    """Generate UUID namespace from MD5 hash (legacy compatibility)."""
-    md5_obj = md5()  # noqa: S324
-    md5_obj.update(seed.encode("utf-8"))
-    return UUID(md5_obj.hexdigest())
-
-
 def _uuid_namespace_from_sha256(seed: str) -> UUID:
     """Generate UUID namespace from SHA-256 hash (first 16 bytes)."""
     sha256_obj = hashlib.sha256()
@@ -85,7 +77,6 @@ def _uuid_namespace_from_sha256(seed: str) -> UUID:
 
 # UUID namespace generator dispatch table
 _UUID_NAMESPACE_GENERATORS = {
-    "md5": _uuid_namespace_from_md5,
     "sha256": _uuid_namespace_from_sha256,
 }
 
@@ -96,7 +87,7 @@ def get_uuid_namespace_with_algorithm(seed: str, algorithm: str) -> UUID:
 
     Args:
         seed: Seed string for namespace generation
-        algorithm: Hash algorithm to use ('sha256' or 'md5')
+        algorithm: Hash algorithm to use ('sha256')
 
     Returns:
         UUID namespace
@@ -132,7 +123,7 @@ def get_deterministic_uuid_with_algorithm(
     Args:
         namespace: Namespace string for UUID generation
         payload: JSON-serializable payload
-        algorithm: Hash algorithm to use ('sha256' or 'md5')
+        algorithm: Hash algorithm to use ('sha256')
 
     Returns:
         Deterministic UUID

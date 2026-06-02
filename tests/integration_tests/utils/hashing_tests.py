@@ -24,19 +24,11 @@ import pytest  # noqa: F401
 from superset.utils.hashing import hash_from_dict, hash_from_str
 
 
-def test_basic_md5_sha():
-    """Test basic hashing with MD5 (legacy mode)."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
-        obj = {
-            "product": "Coffee",
-            "company": "Gobias Industries",
-            "price_in_cents": 4000,
-        }
+def test_basic_md5_sha_raises():
+    """Test that MD5 hashing raises ValueError after deprecation."""
 
-        serialized_obj = '{"company": "Gobias Industries", "price_in_cents": 4000, "product": "Coffee"}'  # noqa: E501
-
-        assert hash_from_str(serialized_obj) == hash_from_dict(obj)
-        assert hash_from_str(serialized_obj) == "35f22273cd6a6798b04f8ddef51135e3"
+    with pytest.raises(ValueError, match="Unsupported hash algorithm"):
+        hash_from_str("test", algorithm="md5")
 
 
 def test_basic_sha256():
@@ -58,9 +50,9 @@ def test_basic_sha256():
         )
 
 
-def test_sort_order_md5_sha():
-    """Test dictionary key order independence with MD5."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
+def test_sort_order_sha256_via_default():
+    """Test dictionary key order independence with SHA-256 (default)."""
+    with patch("superset.utils.hashing.get_hash_algorithm", return_value="sha256"):
         obj_1 = {
             "product": "Coffee",
             "price_in_cents": 4000,
@@ -74,7 +66,10 @@ def test_sort_order_md5_sha():
         }
 
         assert hash_from_dict(obj_1) == hash_from_dict(obj_2)
-        assert hash_from_dict(obj_1) == "35f22273cd6a6798b04f8ddef51135e3"
+        assert (
+            hash_from_dict(obj_1)
+            == "77bc5927f828903888572ab91c4f3114b36609ca5fb92039bef380d622cef596"
+        )
 
 
 def test_sort_order_sha256():
@@ -99,9 +94,9 @@ def test_sort_order_sha256():
         )
 
 
-def test_custom_default_md5_sha():
-    """Test custom serializer with MD5."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
+def test_custom_default_sha256_via_default():
+    """Test custom serializer with SHA-256 (default algorithm)."""
+    with patch("superset.utils.hashing.get_hash_algorithm", return_value="sha256"):
 
         def custom_datetime_serializer(obj: Any):
             if isinstance(obj, datetime.datetime):
@@ -118,7 +113,10 @@ def test_custom_default_md5_sha():
         assert hash_from_str(serialized_obj) == hash_from_dict(
             obj, default=custom_datetime_serializer
         )
-        assert hash_from_str(serialized_obj) == "dc280121213aabcaeb8087aef268fd0d"
+        assert (
+            hash_from_str(serialized_obj)
+            == "417b57b6f3979bdd0937286f2dc872089fcd5fdb7daad1d3dbcaae1e34cc564e"
+        )
 
 
 def test_custom_default_sha256():
@@ -146,9 +144,9 @@ def test_custom_default_sha256():
         )
 
 
-def test_ignore_nan_md5_sha():
-    """Test NaN handling with MD5."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
+def test_ignore_nan_sha256_via_default():
+    """Test NaN handling with SHA-256 (default algorithm)."""
+    with patch("superset.utils.hashing.get_hash_algorithm", return_value="sha256"):
         obj = {
             "product": "Coffee",
             "company": "Gobias Industries",
@@ -160,14 +158,20 @@ def test_ignore_nan_md5_sha():
         )
 
         assert hash_from_str(serialized_obj) == hash_from_dict(obj)
-        assert hash_from_str(serialized_obj) == "5d129d1dffebc0bacc734366476d586d"
+        assert (
+            hash_from_str(serialized_obj)
+            == "efff87146d137b2d0392eff94b74e7644c3a6b135b91563400029995b9236820"
+        )
 
         serialized_obj = (
             '{"company": "Gobias Industries", "price": null, "product": "Coffee"}'
         )
 
         assert hash_from_str(serialized_obj) == hash_from_dict(obj, ignore_nan=True)
-        assert hash_from_str(serialized_obj) == "40e87d61f6add03816bccdeac5713b9f"
+        assert (
+            hash_from_str(serialized_obj)
+            == "9b66e0af1cb74aa58c3ab08654c086ebfdada14b1e6312b4002edc854d99d24d"
+        )
 
 
 def test_ignore_nan_sha256():

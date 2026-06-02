@@ -37,15 +37,14 @@ def test_configurable_hash_method_uses_sha256():
         assert hash_obj.hexdigest() == hashlib.sha256(b"test").hexdigest()
 
 
-def test_configurable_hash_method_uses_md5():
-    """Test ConfigurableHashMethod uses md5 when configured."""
+def test_configurable_hash_method_md5_raises():
+    """Test ConfigurableHashMethod raises ValueError for md5 after deprecation."""
     mock_app = MagicMock()
     mock_app.config = {"HASH_ALGORITHM": "md5"}
 
     with patch("superset.utils.cache_manager.current_app", mock_app):
-        hash_obj = configurable_hash_method(b"test")
-        # Verify it returns a md5 hash object
-        assert hash_obj.hexdigest() == hashlib.md5(b"test").hexdigest()  # noqa: S324
+        with pytest.raises(ValueError, match="Unsupported hash algorithm"):
+            configurable_hash_method(b"test")
 
 
 def test_configurable_hash_method_empty_data():
@@ -154,18 +153,11 @@ def test_superset_cache_memoize_make_cache_key_allows_explicit_hash():
         assert call_kwargs["hash_method"] == hashlib.md5
 
 
-@pytest.mark.parametrize(
-    "algorithm,expected_digest",
-    [
-        ("sha256", hashlib.sha256(b"test_data").hexdigest()),
-        ("md5", hashlib.md5(b"test_data").hexdigest()),  # noqa: S324
-    ],
-)
-def test_configurable_hash_method_parametrized(algorithm, expected_digest):
-    """Parametrized test for ConfigurableHashMethod with different algorithms."""
+def test_configurable_hash_method_sha256_produces_correct_digest():
+    """Test ConfigurableHashMethod with sha256 produces correct digest."""
     mock_app = MagicMock()
-    mock_app.config = {"HASH_ALGORITHM": algorithm}
+    mock_app.config = {"HASH_ALGORITHM": "sha256"}
 
     with patch("superset.utils.cache_manager.current_app", mock_app):
         hash_obj = configurable_hash_method(b"test_data")
-        assert hash_obj.hexdigest() == expected_digest
+        assert hash_obj.hexdigest() == hashlib.sha256(b"test_data").hexdigest()

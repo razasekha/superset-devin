@@ -60,24 +60,16 @@ def test_decode_permalink_id_invalid() -> None:
         decode_permalink_id("foo", "bar")
 
 
-@pytest.mark.parametrize(
-    "algorithm,seed,expected_uuid",
-    [
-        ("md5", "test_seed", UUID("d81a8c4d-6522-9513-525d-6a5cef1c7c9d")),
-        ("sha256", "test_seed", UUID("4504d44d-861b-6919-7db1-d95e47344234")),
-    ],
-    ids=["md5", "sha256"],
-)
-def test_get_uuid_namespace(algorithm, seed, expected_uuid) -> None:
-    """Test UUID namespace generation with different algorithms."""
+def test_get_uuid_namespace() -> None:
+    """Test UUID namespace generation with SHA-256."""
     from superset.key_value.utils import get_uuid_namespace
 
     mock_app = MagicMock()
-    mock_app.config = {"HASH_ALGORITHM": algorithm}
-    namespace = get_uuid_namespace(seed, app=mock_app)
+    mock_app.config = {"HASH_ALGORITHM": "sha256"}
+    namespace = get_uuid_namespace("test_seed", app=mock_app)
 
     assert isinstance(namespace, UUID)
-    assert namespace == expected_uuid
+    assert namespace == UUID("4504d44d-861b-6919-7db1-d95e47344234")
 
 
 def test_get_uuid_namespace_deterministic() -> None:
@@ -102,78 +94,53 @@ def test_get_uuid_namespace_different_seeds() -> None:
     assert namespace1 != namespace2
 
 
-@pytest.mark.parametrize(
-    "algorithm,seed,expected_uuid",
-    [
-        ("md5", "test_seed", UUID("d81a8c4d-6522-9513-525d-6a5cef1c7c9d")),
-        ("sha256", "test_seed", UUID("4504d44d-861b-6919-7db1-d95e47344234")),
-    ],
-    ids=["md5", "sha256"],
-)
-def test_get_uuid_namespace_with_algorithm(algorithm, seed, expected_uuid) -> None:
-    """Test UUID namespace generation with explicit algorithm."""
+def test_get_uuid_namespace_with_algorithm() -> None:
+    """Test UUID namespace generation with explicit SHA-256 algorithm."""
     from superset.key_value.utils import get_uuid_namespace_with_algorithm
 
-    namespace = get_uuid_namespace_with_algorithm(seed, algorithm)
+    namespace = get_uuid_namespace_with_algorithm("test_seed", "sha256")
     assert isinstance(namespace, UUID)
-    assert namespace == expected_uuid
+    assert namespace == UUID("4504d44d-861b-6919-7db1-d95e47344234")
 
 
-def test_get_uuid_namespace_with_algorithm_different_results() -> None:
-    """Test that MD5 and SHA-256 produce different UUIDs for same seed."""
+def test_get_uuid_namespace_with_algorithm_md5_raises() -> None:
+    """Test that MD5 raises ValueError after deprecation."""
     from superset.key_value.utils import get_uuid_namespace_with_algorithm
 
-    namespace_md5 = get_uuid_namespace_with_algorithm("test_seed", "md5")
-    namespace_sha256 = get_uuid_namespace_with_algorithm("test_seed", "sha256")
-    assert namespace_md5 != namespace_sha256
+    with pytest.raises(ValueError, match="Unsupported hash algorithm"):
+        get_uuid_namespace_with_algorithm("test_seed", "md5")
 
 
-@pytest.mark.parametrize(
-    "algorithm",
-    ["md5", "sha256"],
-    ids=["md5", "sha256"],
-)
-def test_get_deterministic_uuid_with_algorithm(algorithm) -> None:
-    """Test deterministic UUID generation with explicit algorithm."""
+def test_get_deterministic_uuid_with_algorithm() -> None:
+    """Test deterministic UUID generation with SHA-256."""
     from superset.key_value.utils import get_deterministic_uuid_with_algorithm
 
     payload = {"key": "value", "number": 123}
 
-    # Test that same algorithm produces same UUID (deterministic)
-    uuid_1 = get_deterministic_uuid_with_algorithm("salt", payload, algorithm)
-    uuid_2 = get_deterministic_uuid_with_algorithm("salt", payload, algorithm)
+    uuid_1 = get_deterministic_uuid_with_algorithm("salt", payload, "sha256")
+    uuid_2 = get_deterministic_uuid_with_algorithm("salt", payload, "sha256")
     assert uuid_1 == uuid_2
 
 
-def test_get_deterministic_uuid_different_algorithms() -> None:
-    """Test that different algorithms produce different UUIDs."""
+def test_get_deterministic_uuid_md5_raises() -> None:
+    """Test that MD5 raises ValueError for deterministic UUID generation."""
     from superset.key_value.utils import get_deterministic_uuid_with_algorithm
 
     payload = {"key": "value", "number": 123}
 
-    uuid_md5 = get_deterministic_uuid_with_algorithm("salt", payload, "md5")
-    uuid_sha256 = get_deterministic_uuid_with_algorithm("salt", payload, "sha256")
-    assert uuid_md5 != uuid_sha256
+    with pytest.raises(ValueError, match="Unsupported hash algorithm"):
+        get_deterministic_uuid_with_algorithm("salt", payload, "md5")
 
 
-@pytest.mark.parametrize(
-    "config_value,expected_fallbacks",
-    [
-        (["md5"], ["md5"]),
-        (["md5", "sha256"], ["md5", "sha256"]),
-        ([], []),
-    ],
-    ids=["single_fallback", "multiple_fallbacks", "no_fallbacks"],
-)
-def test_get_fallback_algorithms(config_value, expected_fallbacks) -> None:
-    """Test getting fallback algorithms from config."""
+def test_get_fallback_algorithms_empty_default() -> None:
+    """Test that fallback algorithms default to empty list."""
     from superset.key_value.utils import get_fallback_algorithms
 
     mock_app = MagicMock()
-    mock_app.config = {"HASH_ALGORITHM_FALLBACKS": config_value}
+    mock_app.config = {"HASH_ALGORITHM_FALLBACKS": []}
     fallbacks = get_fallback_algorithms(app=mock_app)
 
-    assert fallbacks == expected_fallbacks
+    assert fallbacks == []
 
 
 def test_get_fallback_algorithms_default() -> None:
