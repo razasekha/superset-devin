@@ -54,7 +54,6 @@ from superset.advanced_data_type.types import AdvancedDataType
 from superset.constants import (
     CHANGE_ME_ASYNC_QUERIES_JWT_SECRET,
     CHANGE_ME_GUEST_TOKEN_JWT_SECRET,
-    CHANGE_ME_SECRET_KEY,
 )
 from superset.jinja_context import BaseTemplateProcessor
 from superset.key_value.types import JsonKeyValueCodec
@@ -226,7 +225,7 @@ HASH_ALGORITHM_FALLBACKS: list[Literal["sha256"]] = []
 # or use `SUPERSET_SECRET_KEY` environment variable.
 # Use a strong complex alphanumeric string and use a tool to help you generate
 # a sufficiently random sequence, ex: openssl rand -base64 42"
-SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY") or CHANGE_ME_SECRET_KEY
+SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY", "")
 
 # The SQLAlchemy connection string.
 SQLALCHEMY_DATABASE_URI = (

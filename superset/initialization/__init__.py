@@ -647,8 +647,21 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         logger.warning(bottom_banner)
 
     def check_secret_key(self) -> None:
-        if self.config["SECRET_KEY"] == CHANGE_ME_SECRET_KEY:
-            warning = (
+        secret_key = self.config["SECRET_KEY"]
+        if not secret_key:
+            self._log_config_warning(
+                "SECRET_KEY is not set. Set it via the SUPERSET_SECRET_KEY "
+                "environment variable or in superset_config.py.\n"
+                "Use a strong complex alphanumeric string and use a tool to help"
+                " you generate \n"
+                "a sufficiently random sequence, ex: openssl rand -base64 42 \n"
+                "For more info, see: https://superset.apache.org/docs/"
+                "configuration/configuring-superset#specifying-a-secret_key"
+            )
+            logger.error("Refusing to start due to missing SECRET_KEY")
+            sys.exit(1)
+        if secret_key == CHANGE_ME_SECRET_KEY:
+            self._log_config_warning(
                 "A Default SECRET_KEY was detected, please use superset_config.py "
                 "to override it.\n"
                 "Use a strong complex alphanumeric string and use a tool to help"
@@ -657,15 +670,6 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
                 "For more info, see: https://superset.apache.org/docs/"
                 "configuration/configuring-superset#specifying-a-secret_key"
             )
-            if (
-                self.superset_app.debug
-                or self.superset_app.config["TESTING"]
-                or is_test()
-            ):
-                logger.warning("Debug mode identified with default secret key")
-                self._log_config_warning(warning)
-                return
-            self._log_config_warning(warning)
             logger.error("Refusing to start due to insecure SECRET_KEY")
             sys.exit(1)
 
