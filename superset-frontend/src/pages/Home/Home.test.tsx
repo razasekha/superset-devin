@@ -24,8 +24,10 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import { isFeatureEnabled, getExtensionsRegistry } from '@superset-ui/core';
+import { ThemeMode } from '@apache-superset/core/theme';
 import Welcome from 'src/pages/Home';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
+import * as ThemeProviderModule from 'src/theme/ThemeProvider';
 
 const chartsEndpoint = 'glob:*/api/v1/chart/?*';
 const chartInfoEndpoint = 'glob:*/api/v1/chart/_info?*';
@@ -146,6 +148,26 @@ jest.mock('@superset-ui/core', () => ({
   isFeatureEnabled: jest.fn(),
 }));
 
+const mockSetThemeMode = jest.fn();
+const mockCanSetMode = jest.fn().mockReturnValue(true);
+
+jest.spyOn(ThemeProviderModule, 'useThemeContext').mockReturnValue({
+  themeMode: ThemeMode.DEFAULT,
+  setThemeMode: mockSetThemeMode,
+  canSetMode: mockCanSetMode,
+  theme: {} as ReturnType<typeof ThemeProviderModule.useThemeContext>['theme'],
+  setTheme: jest.fn(),
+  resetTheme: jest.fn(),
+  setTemporaryTheme: jest.fn(),
+  clearLocalOverrides: jest.fn(),
+  getCurrentCrudThemeId: jest.fn().mockReturnValue(null),
+  hasDevOverride: jest.fn().mockReturnValue(false),
+  canSetTheme: jest.fn().mockReturnValue(true),
+  canDetectOSPreference: jest.fn().mockReturnValue(true),
+  createDashboardThemeProvider: jest.fn().mockResolvedValue(null),
+  getAppliedThemeId: jest.fn().mockReturnValue(null),
+});
+
 const mockedIsFeatureEnabled = isFeatureEnabled as jest.Mock;
 
 const renderWelcome = (props = mockedProps) =>
@@ -158,6 +180,7 @@ const renderWelcome = (props = mockedProps) =>
 
 afterEach(() => {
   fetchMock.clearHistory();
+  mockSetThemeMode.mockClear();
 });
 
 test('With sql role - renders', async () => {
@@ -303,4 +326,46 @@ test('Should not make data fetch calls if `welcome.main.replacement` is defined'
   expect(fetchMock.callHistory.calls(dashboardsEndpoint)).toHaveLength(0);
   expect(fetchMock.callHistory.calls(recentActivityEndpoint)).toHaveLength(0);
   expect(fetchMock.callHistory.calls(savedQueryEndpoint)).toHaveLength(0);
+});
+
+test('Dark theme toggle - shows toggle when canSetMode returns true', async () => {
+  mockCanSetMode.mockReturnValue(true);
+  await renderWelcome();
+  expect(screen.getByText('Light mode')).toBeInTheDocument();
+});
+
+test('Dark theme toggle - hides toggle when canSetMode returns false', async () => {
+  mockCanSetMode.mockReturnValue(false);
+  await renderWelcome();
+  expect(screen.queryByText('Light mode')).not.toBeInTheDocument();
+  expect(screen.queryByText('Dark mode')).not.toBeInTheDocument();
+  mockCanSetMode.mockReturnValue(true);
+});
+
+test('Dark theme toggle - calls setThemeMode with DARK when clicking in light mode', async () => {
+  mockCanSetMode.mockReturnValue(true);
+  jest.spyOn(ThemeProviderModule, 'useThemeContext').mockReturnValue({
+    themeMode: ThemeMode.DEFAULT,
+    setThemeMode: mockSetThemeMode,
+    canSetMode: mockCanSetMode,
+    theme: {} as ReturnType<
+      typeof ThemeProviderModule.useThemeContext
+    >['theme'],
+    setTheme: jest.fn(),
+    resetTheme: jest.fn(),
+    setTemporaryTheme: jest.fn(),
+    clearLocalOverrides: jest.fn(),
+    getCurrentCrudThemeId: jest.fn().mockReturnValue(null),
+    hasDevOverride: jest.fn().mockReturnValue(false),
+    canSetTheme: jest.fn().mockReturnValue(true),
+    canDetectOSPreference: jest.fn().mockReturnValue(true),
+    createDashboardThemeProvider: jest.fn().mockResolvedValue(null),
+    getAppliedThemeId: jest.fn().mockReturnValue(null),
+  });
+  await renderWelcome();
+  const toggle = screen.getByText('Light mode');
+  userEvent.click(toggle);
+  await waitFor(() => {
+    expect(mockSetThemeMode).toHaveBeenCalledWith(ThemeMode.DARK);
+  });
 });

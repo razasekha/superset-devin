@@ -24,9 +24,14 @@ import {
   getExtensionsRegistry,
   JsonObject,
 } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { styled, ThemeMode } from '@apache-superset/core/theme';
 import rison from 'rison';
-import { Collapse, ListViewCard } from '@superset-ui/core/components';
+import {
+  Collapse,
+  ListViewCard,
+  Icons,
+  Tooltip,
+} from '@superset-ui/core/components';
 import { User } from 'src/types/bootstrapTypes';
 import { reject } from 'lodash';
 import {
@@ -55,6 +60,7 @@ import ActivityTable from 'src/features/home/ActivityTable';
 import ChartTable from 'src/features/home/ChartTable';
 import SavedQueries from 'src/features/home/SavedQueries';
 import DashboardTable from 'src/features/home/DashboardTable';
+import { useThemeContext } from 'src/theme/ThemeProvider';
 
 const extensionsRegistry = getExtensionsRegistry();
 
@@ -161,6 +167,8 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
       userKey?.thumbnails === undefined ? true : userKey?.thumbnails;
   }
   const [checked, setChecked] = useState(defaultChecked);
+  const { setThemeMode, themeMode, canSetMode } = useThemeContext();
+  const isDarkMode = themeMode === ThemeMode.DARK;
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
   const [chartData, setChartData] = useState<Array<object> | null>(null);
   const [queryData, setQueryData] = useState<Array<object> | null>(null);
@@ -320,27 +328,59 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
   const isRecentActivityLoading =
     !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
 
+  const handleThemeToggle = () => {
+    setThemeMode(isDarkMode ? ThemeMode.DEFAULT : ThemeMode.DARK);
+  };
+
   const menuData: SubMenuProps = {
     activeChild: 'Home',
     name: t('Home'),
   };
 
-  if (isThumbnailsEnabled) {
-    menuData.buttons = [
-      {
-        name: (
-          <WelcomeNav>
-            <div className="switch">
-              <Switch checked={checked} onClick={handleToggle} />
-              <span>{t('Thumbnails')}</span>
+  const buttons: SubMenuProps['buttons'] = [];
+
+  if (canSetMode()) {
+    buttons.push({
+      name: (
+        <WelcomeNav>
+          <Tooltip
+            title={
+              isDarkMode ? t('Switch to light mode') : t('Switch to dark mode')
+            }
+          >
+            <div className="switch" data-test="dark-theme-toggle">
+              <Switch
+                checked={isDarkMode}
+                onClick={handleThemeToggle}
+                checkedChildren={<Icons.MoonOutlined iconSize="s" />}
+                unCheckedChildren={<Icons.SunOutlined iconSize="s" />}
+              />
+              <span>{isDarkMode ? t('Dark mode') : t('Light mode')}</span>
             </div>
-          </WelcomeNav>
-        ),
-        onClick: handleToggle,
-        buttonStyle: 'link',
-      },
-    ];
+          </Tooltip>
+        </WelcomeNav>
+      ),
+      onClick: handleThemeToggle,
+      buttonStyle: 'link',
+    });
   }
+
+  if (isThumbnailsEnabled) {
+    buttons.push({
+      name: (
+        <WelcomeNav>
+          <div className="switch">
+            <Switch checked={checked} onClick={handleToggle} />
+            <span>{t('Thumbnails')}</span>
+          </div>
+        </WelcomeNav>
+      ),
+      onClick: handleToggle,
+      buttonStyle: 'link',
+    });
+  }
+
+  menuData.buttons = buttons;
 
   return (
     <>
