@@ -1450,7 +1450,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             merge_pv("catalog_access", datasource.get_catalog_perm())
 
         logger.info("Creating missing database permissions.")
-        for database in self.session.query(models.Database).all():
+        for database in self.session.query(models.Database).yield_per(100):
             merge_pv("database_access", database.perm)
 
         logger.info("Creating missing semantic layer and view permissions.")
@@ -1466,14 +1466,14 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             SemanticView,
         )
 
-        for layer in self.session.query(SemanticLayer).all():
+        for layer in self.session.query(SemanticLayer).yield_per(100):
             perm = layer.get_perm()
             if layer.perm != perm:
                 layer.perm = perm
             if ("datasource_access", perm) not in existing_pvs:
                 self.add_permission_view_menu("datasource_access", perm)
 
-        for view in self.session.query(SemanticView).all():
+        for view in self.session.query(SemanticView).yield_per(100):
             perm = view.get_perm()
             if view.perm != perm:
                 view.perm = perm
