@@ -577,13 +577,13 @@ class TestBrandAppNameFallback:
             "APP_NAME": "My Test Analytics Platform",
         }.get(k, d)
 
-        # Mock payload with default "Superset" brandAppName
+        # Mock payload with default "Superset Widgets" brandAppName
         mock_payload.return_value = {
             "common": {
                 "theme": {
                     "default": {
                         "token": {
-                            "brandAppName": "Superset",  # Default value
+                            "brandAppName": "Superset Widgets",  # Default value
                             "brandLogoAlt": "Apache Superset",
                         }
                     }
@@ -604,21 +604,21 @@ class TestBrandAppNameFallback:
     def test_brandappname_uses_superset_default_when_nothing_set(
         self, mock_app, mock_payload
     ):
-        """Test fallback to 'Superset' when neither is customized"""
+        """Test fallback to 'Superset Widgets' when neither is customized"""
         from superset.views.base import get_spa_template_context
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
-            "APP_NAME": "Superset",  # Default value
+            "APP_NAME": "Superset Widgets",  # Default value
         }.get(k, d)
 
-        # Mock payload with default "Superset" brandAppName
+        # Mock payload with default "Superset Widgets" brandAppName
         mock_payload.return_value = {
             "common": {
                 "theme": {
                     "default": {
                         "token": {
-                            "brandAppName": "Superset",  # Default value
+                            "brandAppName": "Superset Widgets",  # Default value
                             "brandLogoAlt": "Apache Superset",
                         }
                     }
@@ -628,11 +628,11 @@ class TestBrandAppNameFallback:
 
         result = get_spa_template_context("app")
 
-        # Should use default "Superset"
-        assert result["default_title"] == "Superset"
-        # Theme tokens should keep "Superset"
+        # Should use default "Superset Widgets"
+        assert result["default_title"] == "Superset Widgets"
+        # Theme tokens should keep "Superset Widgets"
         theme_tokens = result["theme_tokens"]
-        assert theme_tokens["brandAppName"] == "Superset"
+        assert theme_tokens["brandAppName"] == "Superset Widgets"
 
     @patch("superset.views.base.get_spa_payload")
     @patch("superset.views.base.app")
@@ -708,7 +708,7 @@ class TestBrandAppNameFallback:
                 "theme": {
                     "default": {
                         "token": {
-                            "brandAppName": "Superset",  # Default value
+                            "brandAppName": "Superset Widgets",  # Default value
                             "colorPrimary": "#111",
                         }
                     },
@@ -746,7 +746,7 @@ class TestBrandAppNameFallback:
         original_theme_data = {
             "default": {
                 "token": {
-                    "brandAppName": "Superset",
+                    "brandAppName": "Superset Widgets",
                     "colorPrimary": "#333",
                 }
             }
@@ -780,7 +780,7 @@ class TestBrandAppNameFallback:
         mock_payload.return_value = {
             "common": {
                 "theme": {
-                    "default": {"token": {"brandAppName": "Superset"}},
+                    "default": {"token": {"brandAppName": "Superset Widgets"}},
                     "dark": {},  # Empty theme config
                 }
             }
@@ -823,7 +823,7 @@ class TestBrandAppNameFallback:
         """Test handling when common dict is missing from payload"""
         from superset.views.base import get_spa_template_context
 
-        mock_app.config = {"APP_NAME": "Superset"}
+        mock_app.config = {"APP_NAME": "Superset Widgets"}
 
         # Mock payload without common dict
         mock_payload.return_value = {}
@@ -831,4 +831,4 @@ class TestBrandAppNameFallback:
         result = get_spa_template_context("app")
 
         # Should handle gracefully and use default title
-        assert result["default_title"] == "Superset"
+        assert result["default_title"] == "Superset Widgets"

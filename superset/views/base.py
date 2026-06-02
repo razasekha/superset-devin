@@ -600,8 +600,8 @@ def get_spa_template_context(
     dark_theme = theme_data.get("dark", {})
 
     # Apply brandAppName fallback to both default and dark themes
-    # Priority: theme brandAppName > APP_NAME config > "Superset" default
-    app_name_from_config = app.config.get("APP_NAME", "Superset")
+    # Priority: theme brandAppName > APP_NAME config > "Superset Widgets" default
+    app_name_from_config = app.config.get("APP_NAME", "Superset Widgets")
     for theme_config in [default_theme, dark_theme]:
         if not theme_config:
             continue
@@ -612,10 +612,10 @@ def get_spa_template_context(
 
         if (
             not theme_tokens.get("brandAppName")
-            or theme_tokens.get("brandAppName") == "Superset"
+            or theme_tokens.get("brandAppName") == "Superset Widgets"
         ):
             # If brandAppName not set or is default, check if APP_NAME customized
-            if app_name_from_config != "Superset":
+            if app_name_from_config != "Superset Widgets":
                 # User has customized APP_NAME, use it as brandAppName
                 theme_tokens["brandAppName"] = app_name_from_config
 
@@ -638,7 +638,7 @@ def get_spa_template_context(
         spinner_svg = get_default_spinner_svg()
 
     # Determine default title using the (potentially updated) brandAppName
-    default_title = theme_tokens.get("brandAppName", "Superset")
+    default_title = theme_tokens.get("brandAppName", "Superset Widgets")
 
     # Extract dark theme background for the initial page load CSS.
     dark_theme_tokens = dark_theme.get("token", {}) if dark_theme else {}
