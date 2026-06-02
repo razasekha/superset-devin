@@ -152,3 +152,30 @@ def test_codec(
 
     # Clean up after test as well for good measure
     cache.delete(FIRST_KEY)
+
+
+def test_factory_defaults_to_json_codec(app_context: AppContext) -> None:
+    from unittest.mock import MagicMock
+
+    app = MagicMock()
+    app.config = {"SECRET_KEY": "test"}
+    config: dict[str, Any] = {}
+    args: list[Any] = []
+    kwargs: dict[str, Any] = {"default_timeout": 300}
+
+    cache = SupersetMetastoreCache.factory(app, config, args, kwargs)
+    assert isinstance(cache.codec, JsonKeyValueCodec)
+
+
+def test_factory_allows_explicit_pickle_codec(app_context: AppContext) -> None:
+    from unittest.mock import MagicMock
+
+    app = MagicMock()
+    app.config = {"SECRET_KEY": "test"}
+    codec = PickleKeyValueCodec()
+    config: dict[str, Any] = {"CODEC": codec}
+    args: list[Any] = []
+    kwargs: dict[str, Any] = {"default_timeout": 300}
+
+    cache = SupersetMetastoreCache.factory(app, config, args, kwargs)
+    assert isinstance(cache.codec, PickleKeyValueCodec)
