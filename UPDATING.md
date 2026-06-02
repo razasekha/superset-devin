@@ -24,6 +24,10 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Flask-SQLAlchemy upgraded from 2.5.1 to 3.1.1
+
+Flask-SQLAlchemy has been upgraded from 2.5.1 to 3.1.1. The 2.x branch is no longer maintained. If you have custom code that imports `BaseQuery` from `flask_sqlalchemy`, replace it with `sqlalchemy.orm.Query`. The `Model.query` interface is deprecated in 3.x; use `db.session.query(Model)` instead.
+
 ### Granular Export Controls
 
 A new feature flag `GRANULAR_EXPORT_CONTROLS` introduces three fine-grained permissions that replace the legacy `can_csv` permission:
