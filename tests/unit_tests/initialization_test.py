@@ -264,21 +264,8 @@ class TestCreateAppRoot:
 
 
 class TestCheckAsyncQueriesJwtSecret:
-    @patch("superset.initialization.feature_flag_manager")
-    def test_skips_when_feature_disabled(self, mock_ff):
-        """No-op when GLOBAL_ASYNC_QUERIES is not enabled."""
-        mock_ff.is_feature_enabled.return_value = False
-        mock_app = MagicMock()
-        mock_app.config = {
-            "GLOBAL_ASYNC_QUERIES_JWT_SECRET": CHANGE_ME_ASYNC_QUERIES_JWT_SECRET,
-        }
-        initializer = SupersetAppInitializer(mock_app)
-        initializer.check_async_queries_jwt_secret()  # should not raise / exit
-
-    @patch("superset.initialization.feature_flag_manager")
-    def test_passes_with_custom_secret(self, mock_ff):
+    def test_passes_with_custom_secret(self):
         """No-op when secret has been changed from the default."""
-        mock_ff.is_feature_enabled.return_value = True
         mock_app = MagicMock()
         mock_app.config = {
             "GLOBAL_ASYNC_QUERIES_JWT_SECRET": "a-very-long-custom-secret-for-prod",
@@ -288,12 +275,8 @@ class TestCheckAsyncQueriesJwtSecret:
 
     @patch("superset.initialization.sys")
     @patch("superset.initialization.logger")
-    @patch("superset.initialization.feature_flag_manager")
-    def test_exits_in_production_with_default_secret(
-        self, mock_ff, mock_logger, mock_sys
-    ):
+    def test_exits_in_production_with_default_secret(self, mock_logger, mock_sys):
         """Refuses to start in production when the default secret is used."""
-        mock_ff.is_feature_enabled.return_value = True
         mock_app = MagicMock()
         mock_app.debug = False
         mock_app.config = {
@@ -306,10 +289,8 @@ class TestCheckAsyncQueriesJwtSecret:
 
     @patch("superset.initialization.sys")
     @patch("superset.initialization.logger")
-    @patch("superset.initialization.feature_flag_manager")
-    def test_warns_but_continues_in_debug_mode(self, mock_ff, mock_logger, mock_sys):
+    def test_warns_but_continues_in_debug_mode(self, mock_logger, mock_sys):
         """Warns but does not exit in debug mode."""
-        mock_ff.is_feature_enabled.return_value = True
         mock_app = MagicMock()
         mock_app.debug = True
         mock_app.config = {
@@ -322,21 +303,8 @@ class TestCheckAsyncQueriesJwtSecret:
 
 
 class TestCheckGuestTokenSecret:
-    @patch("superset.initialization.feature_flag_manager")
-    def test_skips_when_feature_disabled(self, mock_ff):
-        """No-op when EMBEDDED_SUPERSET is not enabled."""
-        mock_ff.is_feature_enabled.return_value = False
-        mock_app = MagicMock()
-        mock_app.config = {
-            "GUEST_TOKEN_JWT_SECRET": CHANGE_ME_GUEST_TOKEN_JWT_SECRET,
-        }
-        initializer = SupersetAppInitializer(mock_app)
-        initializer.check_guest_token_secret()  # should not raise / exit
-
-    @patch("superset.initialization.feature_flag_manager")
-    def test_passes_with_custom_secret(self, mock_ff):
+    def test_passes_with_custom_secret(self):
         """No-op when secret has been changed from the default."""
-        mock_ff.is_feature_enabled.return_value = True
         mock_app = MagicMock()
         mock_app.config = {
             "GUEST_TOKEN_JWT_SECRET": "a-very-long-custom-secret-for-prod",
@@ -346,12 +314,8 @@ class TestCheckGuestTokenSecret:
 
     @patch("superset.initialization.sys")
     @patch("superset.initialization.logger")
-    @patch("superset.initialization.feature_flag_manager")
-    def test_exits_in_production_with_default_secret(
-        self, mock_ff, mock_logger, mock_sys
-    ):
+    def test_exits_in_production_with_default_secret(self, mock_logger, mock_sys):
         """Refuses to start in production when the default secret is used."""
-        mock_ff.is_feature_enabled.return_value = True
         mock_app = MagicMock()
         mock_app.debug = False
         mock_app.config = {
@@ -364,10 +328,8 @@ class TestCheckGuestTokenSecret:
 
     @patch("superset.initialization.sys")
     @patch("superset.initialization.logger")
-    @patch("superset.initialization.feature_flag_manager")
-    def test_warns_but_continues_in_debug_mode(self, mock_ff, mock_logger, mock_sys):
+    def test_warns_but_continues_in_debug_mode(self, mock_logger, mock_sys):
         """Warns but does not exit in debug mode."""
-        mock_ff.is_feature_enabled.return_value = True
         mock_app = MagicMock()
         mock_app.debug = True
         mock_app.config = {
