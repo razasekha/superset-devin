@@ -17,6 +17,7 @@
 
 import logging
 
+from flask import request
 from flask_appbuilder import expose
 from flask_appbuilder.hooks import before_request
 from flask_appbuilder.models.sqla.interface import SQLAInterface
@@ -30,6 +31,8 @@ from superset.utils import json
 from superset.views.base import SupersetModelView
 
 from .base import BaseSupersetView, json_success
+
+DEFAULT_PAGE_SIZE = 100
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +65,13 @@ class TagView(BaseSupersetView):
     @has_access_api
     @expose("/tags/", methods=("GET",))
     def tags(self) -> FlaskResponse:
-        query = db.session.query(Tag).all()
+        page = request.args.get("page", 0, type=int)
+        page_size = request.args.get("page_size", DEFAULT_PAGE_SIZE, type=int)
+        page_size = min(page_size, DEFAULT_PAGE_SIZE)
+
+        base_query = db.session.query(Tag)
+        count = base_query.count()
+        tags = base_query.offset(page * page_size).limit(page_size).all()
         results = [
             {
                 "id": obj.id,
@@ -72,6 +81,11 @@ class TagView(BaseSupersetView):
                 "changed_by": obj.changed_by_fk,
                 "created_by": obj.created_by_fk,
             }
-            for obj in query
+            for obj in tags
         ]
-        return json_success(json.dumps(results, default=json.json_int_dttm_ser))
+        return json_success(
+            json.dumps(
+                {"count": count, "result": results},
+                default=json.json_int_dttm_ser,
+            )
+        )
