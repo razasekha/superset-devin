@@ -322,18 +322,22 @@ class Slice(  # pylint: disable=too-many-public-methods
     @property
     def slice_link(self) -> Markup:
         name = escape(self.chart)
-        return Markup(f'<a href="{self.url}">{name}</a>')
+        return Markup(f'<a href="{self.url}">{name}</a>')  # noqa: S704
 
     @property
-    def icons(self) -> str:
-        return f"""
+    def icons(self) -> Markup:
+        url = escape(self.datasource_edit_url or "")
+        datasource = escape(self.datasource or "")
+        return Markup(  # noqa: S704
+            f"""
         <a
-                href="{self.datasource_edit_url}"
+                href="{url}"
                 data-toggle="tooltip"
-                title="{self.datasource}">
+                title="{datasource}">
             <i class="fa fa-database"></i>
         </a>
         """
+        )
 
     @property
     def url(self) -> str:
